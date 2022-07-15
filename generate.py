@@ -1,4 +1,7 @@
+from os import remove
 import sys
+
+from sklearn import neighbors
 
 from crossword import *
 
@@ -99,7 +102,10 @@ class CrosswordCreator():
         (Remove any values that are inconsistent with a variable's unary
          constraints; in this case, the length of the word.)
         """
-        raise NotImplementedError
+        for var in self.domains:
+            for word in self.domains[var]:
+                if len(word) != var.length:
+                    self.domains[var].remove(word)
 
     def revise(self, x, y):
         """
@@ -110,7 +116,22 @@ class CrosswordCreator():
         Return True if a revision was made to the domain of `x`; return
         False if no revision was made.
         """
-        raise NotImplementedError
+        #Position of the letter shared by the words in x
+        letterPosX, letterPosY = self.crossword.overlaps[x, y]
+        
+        revised = False
+        for wordX in self.domains[x]:
+            possible = False
+            for wordY in self.domains[y]:
+                if wordY[letterPosY] == wordX[letterPosX]:
+                    possible = True
+                    break
+
+            if not possible:
+                self.domains[x].remove(wordX)
+                revised = True
+
+        return revised
 
     def ac3(self, arcs=None):
         """
@@ -121,6 +142,23 @@ class CrosswordCreator():
         Return True if arc consistency is enforced and no domains are empty;
         return False if one or more domains end up empty.
         """
+
+        if arcs == None:
+            arcs = self.crossword.overlaps.keys()
+
+        while arcs:
+            x, y = arcs.pop()
+            if self.revise(x, y):
+                if len(self.domains[x]) == 0:
+                    return False
+                    
+                arcs.add(list(self.crossword.neighbors(x) - {y}))
+
+
+
+
+
+
         raise NotImplementedError
 
     def assignment_complete(self, assignment):
