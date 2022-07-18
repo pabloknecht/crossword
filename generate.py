@@ -216,13 +216,7 @@ class CrosswordCreator():
                     letter_index_neighbor = self.crossword.overlaps[(var, neighbor)][1]
                     if value[letter_index] != value_neighbor[letter_index_neighbor]:
                         list_of_values[value] = list_of_values[value] + 1
-        
 
-        print("start *****************************")
-        print(list_of_values)
-        print("copy *****************************")
-        print(sorted(list_of_values.keys(), key=list_of_values.get))
-        print("finish ----------------------------")
         return sorted(list_of_values.keys(), key=list_of_values.get)
 
     def select_unassigned_variable(self, assignment):
@@ -233,9 +227,20 @@ class CrosswordCreator():
         degree. If there is a tie, any of the tied variables are acceptable
         return values.
         """
-        for var in self.domains:
-            if var not in assignment:
-                return var
+        filtered_dom = {v : value for v, value in self.domains.items() if v not in assignment}
+
+        sorted_dom = list()
+        sorted_dom = sorted(filtered_dom.items(), key=lambda x: len(x[1]))
+    
+        max_neighbors = len(self.crossword.neighbors(sorted_dom[0][0]))
+        variable = sorted_dom[0][0]
+        for dom in sorted_dom:
+            if len(dom[1]) == len(sorted_dom[0][1]):
+                if len(self.crossword.neighbors(dom[0])) >= max_neighbors:
+                    max_neighbors = len(self.crossword.neighbors(dom[0]))
+                    variable = dom[0]
+
+        return variable
 
     def backtrack(self, assignment):
         """
@@ -259,7 +264,6 @@ class CrosswordCreator():
                 if self.backtrack(assignment):
                     return assignment
             assignment.popitem()
-
 
 def main():
 
